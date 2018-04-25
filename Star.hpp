@@ -1,10 +1,22 @@
 /*
  * Star.hpp : Star class
  */
+#ifndef STAR_HPP
+#define STAR_HPP
+
 #include <iostream>
 #include <fstream>
+#include <cmath>
+
+#include <stdio.h>
+#include <stdlib.h>
+
 #define N_PARAMS 27
-#define N_RECORDS 120404
+#define N_RECORDS 117955
+#define DEG2AS 3600
+#define AS2MAS 1000
+
+const double PI = 3.141592653589793238463;
 
 class Star {
 	public:
@@ -21,10 +33,25 @@ class Star {
 		float Plx;		// Parallax in mas
 		float Hpmag;	// Hipparcos magnitude
 
-		double x, y, z; // 3D coordinates
+		double x, y, z; // 3D cartesian coordinates Fake for now (TODO)
+		double distance; // real distance calculated for stars with Plx
 		// Constructor
 		Star(int _id, float _RArad, float _DErad, float _pmRA, float _pmDE, 
 			float _Plx, float _Hpmag);
+		// Null constructor
+		Star();
 		// Star(std::map<string, string> params);
 		~Star();
+
+		// calculate cartesian coordinates and save as members
+		int calculate_cartesian(float RA, float DE, float rho);
+
+		/*** Helper functions ***/
+		// calculate distance from RA, DE, Plx
+		static double calculate_distance(float parallax);
+		static inline double asec2deg(double x) { return x/DEG2AS; }
+		static inline double deg2rad(double x) { return x*PI/180; }
+		static inline double mas2rad(double x)
+		{ return deg2rad(asec2deg(x/AS2MAS)); }
 };
+#endif

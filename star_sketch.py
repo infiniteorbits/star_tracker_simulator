@@ -104,8 +104,8 @@ def get_projection_coordinates(fov_alpha, fov_delta, center_alpha, center_delta,
 def main(alpha_deg = 0, delta_deg = 0):
     
     # given angles on the celestial sphere
-    fov_alpha = math.radians(90) # i'll call this the x, relative span of afov, right ascension
-    fov_delta = math.radians(45) # i'll call this the y, relative span of afov, declination
+    fov_alpha = math.radians(15) # i'll call this the x, relative span of afov, right ascension
+    fov_delta = math.radians(15) # i'll call this the y, relative span of afov, declination
     center_alpha = math.radians(alpha_deg) # from [0 to 360) deg
     center_delta = math.radians(delta_deg) # from [-90 to 90) deg # from [0 to 180) deg
     
@@ -172,16 +172,16 @@ def main(alpha_deg = 0, delta_deg = 0):
     pass
 
 if __name__ == "__main__":
-    # main()
-    for x in range(0, 361, 90):
-        for y in range(-90, 91, 45):
+    main()
+    # for x in range(0, 361, 90):
+    #     for y in range(-90, 91, 45):
         
-            # DEBUG
-            global n_stars
-            n_stars = 0
-            global ins_fov_ctr
-            ins_fov_ctr = 0
-            print("center: "+str(x)+", "+str(y))
-            main(x,y)
-            pass
-        pass
+    #         # DEBUG
+    #         global n_stars
+    #         n_stars = 0
+    #         global ins_fov_ctr
+    #         ins_fov_ctr = 0
+    #         print("center: "+str(x)+", "+str(y))
+    #         main(x,y)
+    #         pass
+    #     pass

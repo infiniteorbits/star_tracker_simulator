@@ -1,26 +1,14 @@
 /*
  * hip_parser.cpp : Hipparcos Parser
  */
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <map>
+#include "hip_parser.hpp"
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "Star.hpp"
-#define N_PARAMS 27
-#define N_RECORDS 120404
-
-
-// int parse_stcatalog(int mode, Star *records_out[N_RECORDS])
-int main(int argc, char const *argv[])
+int parse_stcatalog(int size, Star **records_out)
 {
 	// Temporary/Helper vars
-	int n_bright_stars = 0;
-	int line_count = 0;
+	// int n_bright_stars = 0;
+	// int line_count = 0;
+	int ctr = 0;
 	std::string line;
 	std::string filename = "hip2.dat";
 	std::string filedir = "./Hipparcos/"; 
@@ -28,6 +16,8 @@ int main(int argc, char const *argv[])
 	std::string tokens[N_PARAMS];	// TODO: make this the dictionary instead 
 									// of the lbl_idx
 	
+	std::cout << "in hip_parser" << std::endl;
+
 	// Open file
 	ifs.open((filedir+filename).c_str());//, ifstream::in);
 	if (!ifs) {
@@ -47,7 +37,7 @@ int main(int argc, char const *argv[])
 	}
 
 	// Read stream line by line
-	for(line; std::getline(ifs, line); ifs.good()) {   
+	for(; std::getline(ifs, line); ifs.good()) {   
 	    // Make a stream for the line itself
 	    std::stringstream iss(line);
 
@@ -71,12 +61,23 @@ int main(int argc, char const *argv[])
 	//    					atof(tokens[8].c_str()),	// pmDE
 	//    					atof(tokens[6].c_str()),	// Plx
 	//    					atof(tokens[19].c_str()));	// Hpmag
-	    if (star->Hpmag <= 6.5)
-	    	n_bright_stars++;
-	    std::cout << "Star "<< star->id << " has magnitude "<< star->Hpmag<< std::endl;
-	}
+	    // if (star->Hpmag <= 6.5)
+	    // 	n_bright_stars++;
+	    // std::cout<<"Star "<<star->id<<" has magnitude "<<star->Hpmag<<std::endl;
+	    // std::cout<<"Star "<<star->id<<" has RA "<< star->RArad;
+	    // std::cout<<", DE "<< star->DErad<<" & plx "<<star->Plx<<std::endl;
+	    // std::cout<<"Star "<<star->id<<" has x,y,z "<< star->x;
+	    // std::cout<<", "<<star->y<<", "<<star->z<<" & dist "<<star->distance<<" AU"<<std::endl;
 
-	std::cout << n_bright_stars << " are brighter than 6.5"<<std::endl;
+	    // TODO: heap overflow protection
+	    records_out[ctr] = star;
+	    // if (ctr > N_RECORDS)
+	    // {
+	    // 	std::cerr << "More lines than N_RECORDS" << std::endl;
+	    // 	return -1;
+	    // }
+	    ctr++;
+	}
 
 	ifs.close();
 	return 0;
