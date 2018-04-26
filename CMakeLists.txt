@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project( star_tracker_input )
-find_package( OpenCV REQUIRED )
+# find_package( OpenCV REQUIRED )
 find_package(GLUT)
 find_package(OpenGL)
 
@@ -10,7 +10,7 @@ set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
 	GLEW_1130
-)
+) # add ${OpenCV_LIBS} later 
 
 #add_subdirectory(Hipparcos)
 
@@ -27,4 +27,4 @@ include_directories(
 
 add_executable( star_tracker_input star_tracker_input.cpp Star.cpp 
 	hip_parser.cpp shader.cpp Star.hpp hip_parser.hpp shader.hpp )
-target_link_libraries(	star_tracker_input ${OpenCV_LIBS} ${ALL_LIBS} )
+target_link_libraries(	star_tracker_input ${ALL_LIBS} )
