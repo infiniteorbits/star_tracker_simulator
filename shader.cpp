@@ -1,3 +1,7 @@
+/**
+ * shader.cpp: Simple shader loading program implementation
+ */
+
 #include <stdio.h>
 #include <string>
 #include <vector>

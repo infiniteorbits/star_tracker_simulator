@@ -1,5 +1,5 @@
 /*
- * hip_parser.cpp : Hipparcos Parser
+ * hip_parser.cpp : Hipparcos Parser implementation
  */
 #include "hip_parser.hpp"
 
@@ -15,11 +15,9 @@ int parse_stcatalog(int size, Star **records_out)
 	std::ifstream ifs;
 	std::string tokens[N_PARAMS];	// TODO: make this the dictionary instead 
 									// of the lbl_idx
-	
-	std::cout << "in hip_parser" << std::endl;
 
 	// Open file
-	ifs.open((filedir+filename).c_str());//, ifstream::in);
+	ifs.open((filedir+filename).c_str());
 	if (!ifs) {
 	    std::cerr << "Unable to open file" << filename;
 	    return 1;
@@ -53,29 +51,10 @@ int parse_stcatalog(int size, Star **records_out)
 	    					atof(tokens[lbl_idx["pmDE"]].c_str()),
 	    					atof(tokens[lbl_idx["Plx"]].c_str()),
 	    					atof(tokens[lbl_idx["Hpmag"]].c_str()));
-	
-	// 	Star *star = new Star(atoi(tokens[0].c_str()),	// HIP
-	//    					atof(tokens[4].c_str()),	// RArad
-	//    					atof(tokens[5].c_str()),	// DErad
-	//    					atof(tokens[7].c_str()),	// pmRA
-	//    					atof(tokens[8].c_str()),	// pmDE
-	//    					atof(tokens[6].c_str()),	// Plx
-	//    					atof(tokens[19].c_str()));	// Hpmag
-	    // if (star->Hpmag <= 6.5)
-	    // 	n_bright_stars++;
-	    // std::cout<<"Star "<<star->id<<" has magnitude "<<star->Hpmag<<std::endl;
-	    // std::cout<<"Star "<<star->id<<" has RA "<< star->RArad;
-	    // std::cout<<", DE "<< star->DErad<<" & plx "<<star->Plx<<std::endl;
-	    // std::cout<<"Star "<<star->id<<" has x,y,z "<< star->x;
-	    // std::cout<<", "<<star->y<<", "<<star->z<<" & dist "<<star->distance<<" AU"<<std::endl;
 
 	    // TODO: heap overflow protection
 	    records_out[ctr] = star;
-	    // if (ctr > N_RECORDS)
-	    // {
-	    // 	std::cerr << "More lines than N_RECORDS" << std::endl;
-	    // 	return -1;
-	    // }
+
 	    ctr++;
 	}
 

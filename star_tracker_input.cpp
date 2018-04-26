@@ -38,12 +38,12 @@
  * --// 
  * but then again useless class wraps are not the goal either
  */
-Star** records;					// array of stars
+Star** records;										// array of stars
 
-static float vfov = glm::radians(15.0f);
-static int width = 1280;
-static int height = 720;
-static float speed = .5;
+static float vfov = glm::radians(15.0f);			// Vertical field of view
+static int width = 1280;							// hor. resolution (pixels)
+static int height = 720;							// ver. resolution (pixels)
+static float speed = .5;							// speed of rotation
 
 GLFWwindow* window;
 
@@ -111,7 +111,7 @@ void change_mvp()//(float d_alpha, float d_delta)
 	// Projection matrix
 	float near_range = 0.1f;
 	float far_range = 100.0f;
-	glm::mat4 Projection = glm::perspective(vfov, (float) width/(float) height,
+	Projection = glm::perspective(vfov, (float) width/(float) height,
 											near_range, far_range);
 	// Camera matrix
 	glm::vec3 eye = glm::vec3(0,0,0);
@@ -127,7 +127,7 @@ void change_mvp()//(float d_alpha, float d_delta)
 	// up is perpedicular to right and direction
 	glm::vec3 up = glm::cross(right, direction); 
 	// glm::vec3 up = glm::vec3(0,1,0);
-	glm::mat4 View = glm::lookAt(
+	View = glm::lookAt(
 	    eye,
 	    center,
 	    up
@@ -150,6 +150,7 @@ void compute_angles_from_inputs(){
 	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
 		if (rotate_delta+(delta_time*speed) > glm::radians(90.0f))		
 		{
+			// Don't let the camera go higher
 			rotate_delta = glm::radians(90.0f);
 		} else {
 			rotate_delta += delta_time * speed;
@@ -161,6 +162,7 @@ void compute_angles_from_inputs(){
 	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS){
 		if (rotate_delta-(delta_time*speed) < glm::radians(-90.0f))		
 		{
+			// Don't let the camera go lower
 			rotate_delta = glm::radians(-90.0f);
 		} else {
 			rotate_delta -= delta_time * speed;
@@ -168,10 +170,11 @@ void compute_angles_from_inputs(){
 		std::cout << "RA: " << glm::degrees(rotate_alpha) 
 			<< ", DE: " << glm::degrees(rotate_delta) << std::endl;
 	}
-	// look right
-	if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS){
+	// look left
+	if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS){
 		if (rotate_alpha+(delta_time*speed) > glm::radians(360.0f))		
 		{
+			// restart the angle
 			rotate_alpha = rotate_alpha-(delta_time*speed)-glm::radians(360.0f);
 		} else {
 			rotate_alpha += delta_time * speed;
@@ -179,10 +182,11 @@ void compute_angles_from_inputs(){
 		std::cout << "RA: " << glm::degrees(rotate_alpha) 
 			<< ", DE: " << glm::degrees(rotate_delta) << std::endl;
 	}
-	// look left
-	if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS){
+	// look right
+	if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS){
 		if (rotate_alpha-(delta_time*speed) < glm::radians(0.0f))		
 		{
+			// restart the angle
 			rotate_alpha = glm::radians(360.0f) + rotate_alpha-(delta_time*speed);
 		} else {
 			rotate_alpha -= delta_time * speed;
@@ -190,8 +194,6 @@ void compute_angles_from_inputs(){
 		std::cout << "RA: " << glm::degrees(rotate_alpha) 
 			<< ", DE: " << glm::degrees(rotate_delta) << std::endl;
 	}
-
-	// vfov = vfov - 5 * glfwGetMouseWheel();
 
 	// For the next frame, the "last time" will be "now"
 	last_time = curr_time;
@@ -275,16 +277,15 @@ void init()
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-
 	// Black background
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-	// Enable depth test (probs don't need this for stars)
+	// Enable depth test (probably don't need this for stars)
 	// glEnable(GL_DEPTH_TEST);
 	// Accept fragment if it closer to the camera than the former one
 	// glDepthFunc(GL_LESS);
 	glEnable(GL_PROGRAM_POINT_SIZE);
-	// glEnable(GL_POINT_SMOOTH);
+
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders("VertexShader.vertexshader",
 							"FragmentShader.fragmentshader");
@@ -319,14 +320,6 @@ void init()
 	    center,
 	    up
 	    );
-	
-	// // Camera matrix
-	// View       = glm::lookAt(
-	// 							glm::vec3(5,5,5), // Camera is at (4,3,-3), in World Space
-	// 							glm::vec3(0,0,0), // and looks at the origin
-	// 							glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
-	// 					   );
-
 	// Model matrix : an identity matrix (model will be at the origin)
 	glm::mat4 Model = glm::mat4(1.0f);
 	// Our ModelViewProjection : multiplication of our 3 matrices
@@ -347,55 +340,69 @@ void init()
 		g_color_buffer_data[3*i+0] = clr;
 		g_color_buffer_data[3*i+1] = clr; // monochrome
 		g_color_buffer_data[3*i+2] = clr; // monochrome
-		
-		// if (records[i]->id == 91262)
-		// {
-		// 	std::cout<<"Vega spotted"<<std::endl;
-		// 	std::cout << "RA: " << glm::degrees(records[i]->RArad) 
-		// 		<< ", DE: " << glm::degrees(records[i]->DErad) << std::endl;
-		// 	// if it's Vega paint magenta
-		// 	g_color_buffer_data[3*i+0] = 1.0f;
-		// 	g_color_buffer_data[3*i+1] = 0.0f; 
-		// 	g_color_buffer_data[3*i+2] = 1.0f; 
-		// } 
-		// if (records[i]->id == 93194 or records[i]->id == 92420 
-		// 	or records[i]->id == 91971 or records[i]->id == 92791 
-		// 	or records[i]->id == 91926 or records[i]->id == 91919)
-		// {
-		// 	std::cout<<"Lyra star spotted"<<std::endl;
-		// 	std::cout << "RA: " << glm::degrees(records[i]->RArad) 
-		// 		<< ", DE: " << glm::degrees(records[i]->DErad) << std::endl;
-		// 	// if it's in Lyra paint yelow
-		// 	g_color_buffer_data[3*i+0] = 1.0f;
-		// 	g_color_buffer_data[3*i+1] = 1.0f;
-		// 	g_color_buffer_data[3*i+2] = 0.0f;
-		// } 
-		// if (records[i]->id == 32349)
-		// {
-		// 	std::cout<<"Sirius spotted"<<std::endl;
-		// 	std::cout << "RA: " << glm::degrees(records[i]->RArad) 
-		// 		<< ", DE: " << glm::degrees(records[i]->DErad) << std::endl;
-		// 	// if it's Sirius paint cyan
-		// 	g_color_buffer_data[3*i+0] = 0.0f;
-		// 	g_color_buffer_data[3*i+1] = 1.0f;
-		// 	g_color_buffer_data[3*i+2] = 1.0f;
-		// }
 	}
 
 	/********************* Generate and bind the buffers **********************/	
 	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), 
+		g_vertex_buffer_data, GL_STATIC_DRAW);
 
 	glGenBuffers(1, &colorbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), 
+		g_color_buffer_data, GL_STATIC_DRAW);
 
 }
 
 void display()
 {
+	// Clear the screen
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// Use our shader
+	glUseProgram(programID);
+
+	// register arrow keys and move the camera around
+	compute_angles_from_inputs();
+	change_mvp();
+	// Send our transformation to the currently bound shader, 
+	// in the "MVP" uniform
+	glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp[0][0]);
+
+	// 1rst attribute buffer : vertices
+	glEnableVertexAttribArray(vertexPosition_modelspaceID);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glVertexAttribPointer(
+		vertexPosition_modelspaceID, // The attribute we want to configure
+		3,                           // size
+		GL_FLOAT,                    // type
+		GL_FALSE,                    // normalized?
+		0,                           // stride
+		(void*)0                     // array buffer offset
+	);
+
+	// 2nd attribute buffer : colors
+	glEnableVertexAttribArray(vertexColorID);
+	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+	glVertexAttribPointer(
+		vertexColorID,               // The attribute we want to configure
+		3,                           // size
+		GL_FLOAT,                    // type
+		GL_FALSE,                    // normalized?
+		0,                           // stride
+		(void*)0                     // array buffer offset
+	);
+
+	// Draw the points !
+	glDrawArrays(GL_POINTS, 0, N_RECORDS*3);
+	// msleep(100);
+	glDisableVertexAttribArray(vertexPosition_modelspaceID);
+	glDisableVertexAttribArray(vertexColorID);
+
+	// Swap buffers
+	glfwSwapBuffers(window);
+	glfwPollEvents();
 }
 
 int main(int argc, char const *argv[])
@@ -403,78 +410,11 @@ int main(int argc, char const *argv[])
 	init();
 
 	do{
-
-		// Clear the screen
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Use our shader
-		glUseProgram(programID);
-
-		compute_angles_from_inputs();
-		change_mvp();
-		// Send our transformation to the currently bound shader, 
-		// in the "MVP" uniform
-		glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp[0][0]);
-
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(vertexPosition_modelspaceID);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(
-			vertexPosition_modelspaceID, // The attribute we want to configure
-			3,                           // size
-			GL_FLOAT,                    // type
-			GL_FALSE,                    // normalized?
-			0,                           // stride
-			(void*)0                     // array buffer offset
-		);
-
-		// 2nd attribute buffer : colors
-		glEnableVertexAttribArray(vertexColorID);
-		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-		glVertexAttribPointer(
-			vertexColorID,               // The attribute we want to configure
-			3,                           // size
-			GL_FLOAT,                    // type
-			GL_FALSE,                    // normalized?
-			0,                           // stride
-			(void*)0                     // array buffer offset
-		);
-
-		glPointSize(6.0);
-		// Draw the points !
-		glDrawArrays(GL_POINTS, 0, N_RECORDS*3);
-		// msleep(100);
-		glDisableVertexAttribArray(vertexPosition_modelspaceID);
-		glDisableVertexAttribArray(vertexColorID);
-
-		// Swap buffers
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-
+		display();	
 	} // Check if the ESC key was pressed or the window was closed
 	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
 		   glfwWindowShouldClose(window) == 0 );
 
-
 	free_resources(1);
-
-	// float light_mag = 7.0f;
-	// float dark_mag = 0.0f;
-	// float tmp;
-	// for (int i = 0; i < N_RECORDS; ++i)
-	// {
-	// 	tmp = records[i]->Hpmag;
-	// 	if (tmp > dark_mag)
-	// 	{
-	// 		dark_mag = tmp;
-	// 	}
-	// 	if (tmp < light_mag)
-	// 	{
-	// 		light_mag = tmp;
-	// 	}
-	// }
-	// std::cout << "brightest: "<< light_mag << std::endl;
-	// std::cout << "darkest: "<< dark_mag << std::endl;
-	// free_resources(0);
 	return 0;
 }

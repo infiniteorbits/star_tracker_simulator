@@ -31,7 +31,7 @@ Star::Star()
 	DErad = 0;	// ICRS
 	pmRA = 0;	// in mas/yr
 	pmDE = 0;	// in mas/yr
-	Plx = 0;		// Parallax in mas
+	Plx = 0;	// Parallax in mas
 	Hpmag = 0;
 
 	float fake_rho = 1; // fake for now (TODO)

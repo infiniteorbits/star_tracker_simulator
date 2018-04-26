@@ -1,5 +1,5 @@
 /*
- *
+ * hip_parser.hpp: Hipparcos catalog parser class
  *
  */
 #ifndef HIP_PARSER_HPP

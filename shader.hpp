@@ -1,3 +1,6 @@
+/**
+ * shader.hpp: Simple shader loading program definition
+ */
 #ifndef SHADER_HPP
 #define SHADER_HPP
 

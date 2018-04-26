@@ -24,6 +24,7 @@ class Star {
 		// 	"Plx","pmRA","pmDE","e_RArad","e_DErad","e_Plx","e_pmRA","e_pmDE",
 		// 	"Ntr","F2","F1","var","ic","Hpmag","e_Hpmag","sHp","VA","B-V",
 		// 	"e_B-V","V-I","UW"};
+		
 		// needed vars
 		int id;// 
 		float RArad;	// ICRS
