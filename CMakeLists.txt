@@ -6,6 +6,25 @@ find_package(OpenGL)
 
 set(CMAKE_CXX_FLAGS "-g -Wall")
 
+set(ALL_LIBS
+	${OPENGL_LIBRARY}
+	glfw
+	GLEW_1130
+)
+
 #add_subdirectory(Hipparcos)
-add_executable( star_tracker_input star_tracker_input.cpp Star.cpp hip_parser.cpp Star.hpp hip_parser.hpp )
-target_link_libraries( star_tracker_input ${OpenCV_LIBS} )
+
+# Compile external dependencies 
+add_subdirectory (external)
+
+include_directories(
+	external/glfw-3.1.2/include/GLFW/
+	external/glm-0.9.7.1/
+	external/glew-1.13.0/include/
+	.
+)
+
+
+add_executable( star_tracker_input star_tracker_input.cpp Star.cpp 
+	hip_parser.cpp shader.cpp Star.hpp hip_parser.hpp shader.hpp )
+target_link_libraries(	star_tracker_input ${OpenCV_LIBS} ${ALL_LIBS} )

@@ -33,7 +33,7 @@ class Star {
 		float Plx;		// Parallax in mas
 		float Hpmag;	// Hipparcos magnitude
 
-		double x, y, z; // 3D cartesian coordinates Fake for now (TODO)
+		double x, y, z; // 3D cartesian coordinates (unit sphere)
 		double distance; // real distance calculated for stars with Plx
 		// Constructor
 		Star(int _id, float _RArad, float _DErad, float _pmRA, float _pmDE, 
