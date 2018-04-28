@@ -95,7 +95,7 @@ install/strip/fast: install/strip
 
 # Special rule for the target list_install_components
 list_install_components:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\""
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\" \"libassimp3.0-r1270-OGLtuts\""
 .PHONY : list_install_components
 
 # Special rule for the target list_install_components
@@ -155,6 +155,19 @@ star_tracker_input: cmake_check_build_system
 star_tracker_input/fast:
 	$(MAKE) -f CMakeFiles/star_tracker_input.dir/build.make CMakeFiles/star_tracker_input.dir/build
 .PHONY : star_tracker_input/fast
+
+#=============================================================================
+# Target rules for targets named ANTTWEAKBAR_116_OGLCORE_GLFW
+
+# Build rule for target.
+ANTTWEAKBAR_116_OGLCORE_GLFW: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 ANTTWEAKBAR_116_OGLCORE_GLFW
+.PHONY : ANTTWEAKBAR_116_OGLCORE_GLFW
+
+# fast build rule for target.
+ANTTWEAKBAR_116_OGLCORE_GLFW/fast:
+	$(MAKE) -f external/CMakeFiles/ANTTWEAKBAR_116_OGLCORE_GLFW.dir/build.make external/CMakeFiles/ANTTWEAKBAR_116_OGLCORE_GLFW.dir/build
+.PHONY : ANTTWEAKBAR_116_OGLCORE_GLFW/fast
 
 #=============================================================================
 # Target rules for targets named GLEW_1130
@@ -507,6 +520,84 @@ docs/fast:
 	$(MAKE) -f external/glfw-3.1.2/docs/CMakeFiles/docs.dir/build.make external/glfw-3.1.2/docs/CMakeFiles/docs.dir/build
 .PHONY : docs/fast
 
+#=============================================================================
+# Target rules for targets named zlib
+
+# Build rule for target.
+zlib: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 zlib
+.PHONY : zlib
+
+# fast build rule for target.
+zlib/fast:
+	$(MAKE) -f external/assimp-3.0.1270/contrib/zlib/CMakeFiles/zlib.dir/build.make external/assimp-3.0.1270/contrib/zlib/CMakeFiles/zlib.dir/build
+.PHONY : zlib/fast
+
+#=============================================================================
+# Target rules for targets named assimp
+
+# Build rule for target.
+assimp: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 assimp
+.PHONY : assimp
+
+# fast build rule for target.
+assimp/fast:
+	$(MAKE) -f external/assimp-3.0.1270/code/CMakeFiles/assimp.dir/build.make external/assimp-3.0.1270/code/CMakeFiles/assimp.dir/build
+.PHONY : assimp/fast
+
+#=============================================================================
+# Target rules for targets named BulletSoftBody
+
+# Build rule for target.
+BulletSoftBody: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 BulletSoftBody
+.PHONY : BulletSoftBody
+
+# fast build rule for target.
+BulletSoftBody/fast:
+	$(MAKE) -f external/bullet-2.81-rev2613/src/BulletSoftBody/CMakeFiles/BulletSoftBody.dir/build.make external/bullet-2.81-rev2613/src/BulletSoftBody/CMakeFiles/BulletSoftBody.dir/build
+.PHONY : BulletSoftBody/fast
+
+#=============================================================================
+# Target rules for targets named BulletCollision
+
+# Build rule for target.
+BulletCollision: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 BulletCollision
+.PHONY : BulletCollision
+
+# fast build rule for target.
+BulletCollision/fast:
+	$(MAKE) -f external/bullet-2.81-rev2613/src/BulletCollision/CMakeFiles/BulletCollision.dir/build.make external/bullet-2.81-rev2613/src/BulletCollision/CMakeFiles/BulletCollision.dir/build
+.PHONY : BulletCollision/fast
+
+#=============================================================================
+# Target rules for targets named BulletDynamics
+
+# Build rule for target.
+BulletDynamics: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 BulletDynamics
+.PHONY : BulletDynamics
+
+# fast build rule for target.
+BulletDynamics/fast:
+	$(MAKE) -f external/bullet-2.81-rev2613/src/BulletDynamics/CMakeFiles/BulletDynamics.dir/build.make external/bullet-2.81-rev2613/src/BulletDynamics/CMakeFiles/BulletDynamics.dir/build
+.PHONY : BulletDynamics/fast
+
+#=============================================================================
+# Target rules for targets named LinearMath
+
+# Build rule for target.
+LinearMath: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 LinearMath
+.PHONY : LinearMath
+
+# fast build rule for target.
+LinearMath/fast:
+	$(MAKE) -f external/bullet-2.81-rev2613/src/LinearMath/CMakeFiles/LinearMath.dir/build.make external/bullet-2.81-rev2613/src/LinearMath/CMakeFiles/LinearMath.dir/build
+.PHONY : LinearMath/fast
+
 Star.o: Star.cpp.o
 .PHONY : Star.o
 
@@ -616,6 +707,7 @@ help:
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
 	@echo "... star_tracker_input"
+	@echo "... ANTTWEAKBAR_116_OGLCORE_GLFW"
 	@echo "... GLEW_1130"
 	@echo "... uninstall"
 	@echo "... glfw"
@@ -643,6 +735,12 @@ help:
 	@echo "... title"
 	@echo "... windows"
 	@echo "... docs"
+	@echo "... zlib"
+	@echo "... assimp"
+	@echo "... BulletSoftBody"
+	@echo "... BulletCollision"
+	@echo "... BulletDynamics"
+	@echo "... LinearMath"
 	@echo "... Star.o"
 	@echo "... Star.i"
 	@echo "... Star.s"
