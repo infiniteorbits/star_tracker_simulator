@@ -22,7 +22,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <shader.hpp> // shader loading and compiling functions
-
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h" // Sean Barrett's stb_image library - http://nothings.org
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h" // http://nothings.org
 #include "hip_parser.hpp"
 
 #define N_PARAMS 27
@@ -40,7 +43,7 @@
  */
 Star** records;										// array of stars
 
-static float vfov = glm::radians(15.0f);			// Vertical field of view
+static float vfov = glm::radians(10.69);			// Vertical field of view
 static int width = 1280;							// hor. resolution (pixels)
 static int height = 720;							// ver. resolution (pixels)
 static float speed = .5;							// speed of rotation
@@ -137,7 +140,8 @@ void change_mvp()//(float d_alpha, float d_delta)
 
 }
 
-void compute_angles_from_inputs(){
+void compute_angles_from_inputs()
+{
 
 	// glfwGetTime is called only once, the first time this function is called
 	static double last_time = glfwGetTime();
@@ -197,6 +201,27 @@ void compute_angles_from_inputs(){
 
 	// For the next frame, the "last time" will be "now"
 	last_time = curr_time;
+}
+
+void screencapture()
+{
+    int g_gl_width = width;
+    int g_gl_height = height; 
+    
+	unsigned char *buffer = (unsigned char *)malloc(g_gl_width*g_gl_height*3);
+	glReadPixels(0, 0, g_gl_width, g_gl_height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+	char name[1024];
+	printf( " writing screenshot_ra_%.2f_de_%.2f.png", glm::degrees(rotate_alpha),
+				glm::degrees(rotate_delta) );
+	sprintf( name, "screenshot_ra_%.2f_de_%.2f.png", glm::degrees(rotate_alpha),
+				glm::degrees(rotate_delta) );
+	unsigned char *last_row = buffer + ( g_gl_width * 3 * ( g_gl_height - 1 ) );
+	if ( !stbi_write_png( name, g_gl_width, g_gl_height, 3, last_row,
+												-3 * g_gl_width ) ) {
+		fprintf( stderr, "ERROR: could not write screenshot file %s\n", name );
+	}
+	free( buffer );
+	return ;    
 }
 
 void free_resources(int depth)
@@ -396,6 +421,11 @@ void display()
 
 	// Draw the points !
 	glDrawArrays(GL_POINTS, 0, N_RECORDS*3);
+
+    // Take screenshot on S key press
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        screencapture();
+
 	// msleep(100);
 	glDisableVertexAttribArray(vertexPosition_modelspaceID);
 	glDisableVertexAttribArray(vertexColorID);
