@@ -61,3 +61,10 @@ int parse_stcatalog(int size, Star **records_out)
 	ifs.close();
 	return 0;
 }
+
+int sort_stars(Star **records_in, size_t size)
+{
+    std::sort(records_in, records_in+size);
+    return 0;
+}
+

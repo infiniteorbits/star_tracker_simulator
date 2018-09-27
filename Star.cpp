@@ -45,12 +45,37 @@ Star::Star()
 
 int Star::calculate_cartesian(float ra, float de, float rho)
 {
+	//x = rho*cos(de)*sin(ra);
+	//y = rho*sin(de);
+	//z = rho*cos(de)*cos(ra);
 	x = rho*cos(de)*cos(ra);
 	y = rho*cos(de)*sin(ra);
 	z = rho*sin(de);
 
 	return 0;
 }
+// operators
+bool operator> (const Star &s1, const Star &s2)
+{
+    return s1.Hpmag < s2.Hpmag;
+}
+bool operator>= (const Star &s1, const Star &s2)
+{
+    return s1.Hpmag <= s2.Hpmag;
+}
+bool operator== (const Star &s1, const Star &s2)
+{
+    return s1.Hpmag == s2.Hpmag;
+}
+bool operator<= (const Star &s1, const Star &s2)
+{
+    return s1.Hpmag >= s2.Hpmag;
+}
+bool operator< (const Star &s1, const Star &s2)
+{
+    return s1.Hpmag > s2.Hpmag;
+}
+
 
 // calculate distance Plx in AU
 double Star::calculate_distance(float parallax) 

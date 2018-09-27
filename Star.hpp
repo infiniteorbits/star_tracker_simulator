@@ -12,7 +12,6 @@
 #include <stdlib.h>
 
 #define N_PARAMS 27
-#define N_RECORDS 117955
 #define DEG2AS 3600
 #define AS2MAS 1000
 
@@ -43,6 +42,14 @@ class Star {
 		Star();
 		// Star(std::map<string, string> params);
 		~Star();
+
+        // operators
+        friend bool operator> (const Star &s1, const Star &s2);
+        friend bool operator>= (const Star &s1, const Star &s2);
+        friend bool operator== (const Star &s1, const Star &s2);
+        friend bool operator<= (const Star &s1, const Star &s2);
+        friend bool operator< (const Star &s1, const Star &s2);
+
 
 		// calculate cartesian coordinates and save as members
 		int calculate_cartesian(float RA, float DE, float rho);

@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <map>
 #include <cstdlib>
 
@@ -30,6 +31,7 @@
 
 #define N_PARAMS 27
 #define N_RECORDS 117955
+#define N_RECORDS_MAX 117955
 #define BRIGHTEST -1.0876
 #define DARKEST 14.5622
 
@@ -42,10 +44,14 @@
  * but then again useless class wraps are not the goal either
  */
 Star** records;										// array of stars
+Star* target;                                       // target spacecraft
+
+bool add_target_flag = true;                        // show/hide target
 
 static float vfov = glm::radians(10.69);			// Vertical field of view
-static int width = 1280;							// hor. resolution (pixels)
-static int height = 720;							// ver. resolution (pixels)
+// static float vfov = glm::radians(20.00);			// Vertical field of view
+static int width = 2592;							// hor. resolution (pixels)
+static int height = 1944;							// ver. resolution (pixels)
 static float speed = .5;							// speed of rotation
 
 GLFWwindow* window;
@@ -54,10 +60,10 @@ GLuint programID;									// handle for shaders
 
 GLuint vertexPosition_modelspaceID;					// handle
 GLuint vertexbuffer;								// buffer 
-static GLfloat g_vertex_buffer_data[N_RECORDS*3];	// data
+static GLfloat g_vertex_buffer_data[(N_RECORDS+1)*3];	// data + TARGET
 GLuint vertexColorID;
 GLuint colorbuffer;
-static GLfloat g_color_buffer_data[N_RECORDS*RGB_CHANNELS];
+static GLfloat g_color_buffer_data[(N_RECORDS+1)*RGB_CHANNELS];
 
 GLuint matrixID;
 glm::mat4 Projection;
@@ -65,7 +71,17 @@ glm::mat4 View;
 glm::mat4 Model;
 glm::mat4 mvp;
 
-float rotate_delta, rotate_alpha;	// declination, RA
+float is_tgt_moving = false;                        // flag to move target
+float rotate_delta, rotate_alpha;	                // declination, RA
+float target_delta, target_alpha;                   // target coords
+float tgt_delta_speed = 0.01, tgt_alpha_speed = 0.01; // TODO: make this proper
+
+float yellow[] = { (float) 255/255, (float) 255/255, (float) 0/255 };
+float blue[] = { (float) 0/255, (float) 0/255, (float) 255/255 };
+float green[] = { (float) 0/255, (float) 255/255, (float) 0/255 };
+float red[] = { (float) 255/255, (float) 0/255, (float) 0/255 };
+float cyan[] = { (float) 0/255, (float) 255/255, (float) 255/255 };
+float magenta[] = { (float) 255/255, (float) 0/255, (float) 255/255 };
 
 /**
  * \brief Active sleep function
@@ -89,6 +105,11 @@ glm::vec3 spherical_to_cartesian(float r, float delta, float alpha)
 		r*sin(delta), 			// y
 		r*cos(alpha)*cos(delta)	// z
 		);
+	//return glm::vec3(
+	//	r*cos(alpha)*cos(delta),// x
+	//	r*sin(alpha)*cos(delta),// y
+	//	r*sin(delta)	        // z
+	//	);
 }
 
 glm::vec3 unit_sph_to_cart(float delta, float alpha)
@@ -101,9 +122,13 @@ glm::vec3 unit_sph_to_cart(float delta, float alpha)
  */
 float Vmag_to_color(float Vmag)
 {
-	float upper_lim = DARKEST - BRIGHTEST + 0; // constant offset for visibility
-	float inv_perc = 1 - (Vmag/upper_lim); 
-	return inv_perc;
+	//float upper_lim = DARKEST - BRIGHTEST + 0; // constant offset for visibility
+	//float inv_perc = 1 - (Vmag/upper_lim);
+    float curve = 4.01;
+    float offset = Vmag - BRIGHTEST;
+    float normalized = offset/DARKEST;
+    float inv_perc = exp(-curve*normalized);
+    return inv_perc;
 }
 
 void change_mvp()//(float d_alpha, float d_delta)
@@ -203,6 +228,30 @@ void compute_angles_from_inputs()
 	last_time = curr_time;
 }
 
+void move_target() 
+{
+    float seconds_passed = 0.01f; // assume constant time for now (TODO)
+    target_delta = target_delta + (seconds_passed*tgt_delta_speed);
+    target_alpha = target_alpha + (seconds_passed*tgt_alpha_speed);
+
+    /********************* Update the buffers ********************************/
+    // make new star
+    target = new Star(0,target_alpha, target_delta, 0.0, 0.0, 0.0, target->Hpmag);
+    g_vertex_buffer_data[3*0+0] = target->y;
+    g_vertex_buffer_data[3*0+1] = target->z;
+    g_vertex_buffer_data[3*0+2] = target->x;
+	
+    printf("RA: %f, DE: %f target\n", glm::degrees(target_alpha), 
+            glm::degrees(target_delta)); 
+    //printf("x,y,z: %f,%f,%f\n", g_vertex_buffer_data[0], 
+    //        g_vertex_buffer_data[1], g_vertex_buffer_data[2]);
+    // Re-bind the buffers
+    glGenBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), 
+		g_vertex_buffer_data, GL_STATIC_DRAW);
+}
+
 void screencapture()
 {
     int g_gl_width = width;
@@ -213,8 +262,9 @@ void screencapture()
 	char name[1024];
 	printf( " writing screenshot_ra_%.2f_de_%.2f.png", glm::degrees(rotate_alpha),
 				glm::degrees(rotate_delta) );
-	sprintf( name, "screenshot_ra_%.2f_de_%.2f.png", glm::degrees(rotate_alpha),
-				glm::degrees(rotate_delta) );
+	sprintf( name, "screenshot_ra_%.2f_de_%.2f__tra_%.2f_tde_%.2f.png", 
+            glm::degrees(rotate_alpha), glm::degrees(rotate_delta),
+            glm::degrees(target_alpha), glm::degrees(target_delta));
 	unsigned char *last_row = buffer + ( g_gl_width * 3 * ( g_gl_height - 1 ) );
 	if ( !stbi_write_png( name, g_gl_width, g_gl_height, 3, last_row,
 												-3 * g_gl_width ) ) {
@@ -230,6 +280,7 @@ void free_resources(int depth)
 	for (int i = 0; i < N_RECORDS; ++i) { delete records[i]; }
 	delete [] records;
 
+    delete target;
 
 	if (depth > 0)
 	{
@@ -252,9 +303,22 @@ void init()
 	/* initialize random seed: */
 	srand (time(NULL));
 
+    /******************************** Add target ******************************/
+    float target_HpMag;
+    if (add_target_flag == true) {
+        target_HpMag = BRIGHTEST;
+    } else {
+        // make target black
+        target_HpMag = DARKEST;
+    }
+    // TODO: make it easy to generate the target elsewhere
+    target = new Star(); // starts at origin
+    target->Hpmag = target_HpMag;
+    printf("Hpmag: %f\n", target_HpMag);
+
 	/************************** Parse star catalog ****************************/
-	records = new Star*[N_RECORDS];
-	for (int i = 0; i < N_RECORDS; ++i)
+	records = new Star*[N_RECORDS_MAX];
+	for (int i = 0; i < N_RECORDS_MAX; ++i)
 	{
 		records[i] = new Star();
 	}
@@ -266,6 +330,13 @@ void init()
 		std::exit(1);
 	}
 
+    // sort catalog according to Hpmag
+    // TODO: sort doesn't work
+    printf("Highest Hpmag: %f, Lowest: %f\n", records[0]->Hpmag, 
+            records[N_RECORDS_MAX-1]->Hpmag);
+    sort_stars(records, N_RECORDS_MAX);
+    printf("Highest Hpmag: %f, Lowest: %f\n", records[0]->Hpmag, 
+            records[N_RECORDS_MAX-1]->Hpmag);
 	/**************************** Initialise GLFW *****************************/
 	if( !glfwInit() )
 	{
@@ -350,23 +421,64 @@ void init()
 	// Our ModelViewProjection : multiplication of our 3 matrices
 	mvp = Projection * View * Model;
 
+    /****************************** Add target ********************************/
+    float clr;
+    g_vertex_buffer_data[3*0+0] = target->y;
+    g_vertex_buffer_data[3*0+1] = target->z;
+    g_vertex_buffer_data[3*0+2] = target->x;
+    
+    clr = Vmag_to_color(target->Hpmag);
+    printf("color: %f\nx,y,z: %f,%f,%f\n",clr, g_vertex_buffer_data[0], g_vertex_buffer_data[0], g_vertex_buffer_data[0]);
+
+    g_color_buffer_data[3*0+0] = clr;
+    g_color_buffer_data[3*0+1] = clr; // monochrome
+    g_color_buffer_data[3*0+2] = clr; // monochrome
+
+    //g_vertex_buffer_data[3*N_RECORDS+0] = target->x;
+    //g_vertex_buffer_data[3*N_RECORDS+1] = target->y;
+    //g_vertex_buffer_data[3*N_RECORDS+2] = target->z;
+    //
+    //clr = Vmag_to_color(target->Hpmag);
+    //printf("%f",clr);
+
+    //g_color_buffer_data[3*N_RECORDS+0] = clr;
+    //g_color_buffer_data[3*N_RECORDS+1] = 0.0f; // monochrome
+    //g_color_buffer_data[3*N_RECORDS+2] = 0.0f; // monochrome
+
 	/************************* Initialise buffer data *************************/
-	float clr;
-	for (int i = 0; i < N_RECORDS; i++)
+	//float clr;
+	for (int i = 1; i < N_RECORDS+1; i++)
 	{
 		// TODO: scale to increase distance
-		g_vertex_buffer_data[3*i+0] = records[i]->x;
-		g_vertex_buffer_data[3*i+1] = records[i]->y;
-		g_vertex_buffer_data[3*i+2] = records[i]->z;
+		//g_vertex_buffer_data[3*i+0] = records[i-1]->x;
+		//g_vertex_buffer_data[3*i+1] = records[i-1]->y;
+		//g_vertex_buffer_data[3*i+2] = records[i-1]->z;
+		g_vertex_buffer_data[3*i+0] = records[i-1]->y;
+		g_vertex_buffer_data[3*i+1] = records[i-1]->z;
+		g_vertex_buffer_data[3*i+2] = records[i-1]->x;
 		
-		clr = Vmag_to_color(records[i]->Hpmag);
+		clr = Vmag_to_color(records[i-1]->Hpmag);
 		// clr = 1.0f; // all white
 		// clr = 0.0f; // all black
 		g_color_buffer_data[3*i+0] = clr;
 		g_color_buffer_data[3*i+1] = clr; // monochrome
 		g_color_buffer_data[3*i+2] = clr; // monochrome
+        
+        // // if Sirius A
+        // if (records[i-1]->id == 32349) {
+    		// g_color_buffer_data[3*i+0] = yellow[0];
+    		// g_color_buffer_data[3*i+1] = yellow[1]; // monochrome
+    		// g_color_buffer_data[3*i+2] = yellow[2]; // monochrome
+        // }
+        // // if Vega 
+        // if (records[i-1]->id == 91262) {
+    		// g_color_buffer_data[3*i+0] = cyan[0];
+    		// g_color_buffer_data[3*i+1] = cyan[1]; // monochrome
+    		// g_color_buffer_data[3*i+2] = cyan[2]; // monochrome
+        // }
 	}
-
+    printf("end color: %f\nx,y,z: %f,%f,%f\n",clr, g_vertex_buffer_data[3*N_RECORDS], g_vertex_buffer_data[3*N_RECORDS+1], g_vertex_buffer_data[3*N_RECORDS+2]);
+    
 	/********************* Generate and bind the buffers **********************/	
 	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -391,6 +503,14 @@ void display()
 	// register arrow keys and move the camera around
 	compute_angles_from_inputs();
 	change_mvp();
+    
+    // Use 'M' to start moving the target
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
+        is_tgt_moving = !(is_tgt_moving);
+
+    if (is_tgt_moving)
+        move_target();
+
 	// Send our transformation to the currently bound shader, 
 	// in the "MVP" uniform
 	glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp[0][0]);
@@ -420,7 +540,7 @@ void display()
 	);
 
 	// Draw the points !
-	glDrawArrays(GL_POINTS, 0, N_RECORDS*3);
+	glDrawArrays(GL_POINTS, 0, (N_RECORDS+1)*3);
 
     // Take screenshot on S key press
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
