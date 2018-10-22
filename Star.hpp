@@ -1,4 +1,4 @@
-/*
+/* 
  * Star.hpp : Star class
  */
 #ifndef STAR_HPP

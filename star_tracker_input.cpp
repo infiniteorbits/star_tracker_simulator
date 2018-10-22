@@ -28,6 +28,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h" // http://nothings.org
 #include "hip_parser.hpp"
+#include "RSO.hpp"
 
 #define N_PARAMS 27
 #define N_RECORDS 117955
@@ -44,12 +45,11 @@
  * but then again useless class wraps are not the goal either
  */
 Star** records;										// array of stars
-Star* target;                                       // target spacecraft
 
 bool add_target_flag = true;                        // show/hide target
 
-static float vfov = glm::radians(10.69);			// Vertical field of view
-// static float vfov = glm::radians(20.00);			// Vertical field of view
+//static float vfov = glm::radians(10.69);			// Vertical field of view
+static float vfov = glm::radians(30.00);			// Vertical field of view
 static int width = 2592;							// hor. resolution (pixels)
 static int height = 1944;							// ver. resolution (pixels)
 static float speed = .5;							// speed of rotation
@@ -71,10 +71,13 @@ glm::mat4 View;
 glm::mat4 Model;
 glm::mat4 mvp;
 
-float is_tgt_moving = false;                        // flag to move target
+// Targets
+bool is_tgt_moving = false;                         // flag to move target
+RSO *target;                                        // target spacecraft 
+
 float rotate_delta, rotate_alpha;	                // declination, RA
-float target_delta, target_alpha;                   // target coords
-float tgt_delta_speed = 0.01, tgt_alpha_speed = 0.01; // TODO: make this proper
+// float target_delta, target_alpha;                   // target coords
+// float rso- = 0.01, tgt_alpha_speed = 0.01; // TODO: make this proper
 
 float yellow[] = { (float) 255/255, (float) 255/255, (float) 0/255 };
 float blue[] = { (float) 0/255, (float) 0/255, (float) 255/255 };
@@ -124,11 +127,47 @@ float Vmag_to_color(float Vmag)
 {
 	//float upper_lim = DARKEST - BRIGHTEST + 0; // constant offset for visibility
 	//float inv_perc = 1 - (Vmag/upper_lim);
-    float curve = 4.01;
-    float offset = Vmag - BRIGHTEST;
-    float normalized = offset/DARKEST;
-    float inv_perc = exp(-curve*normalized);
-    return inv_perc;
+//    float curve = 4.01;
+//    float offset = Vmag - BRIGHTEST;
+//    float normalized = offset/DARKEST;
+//    float inv_perc = exp(-curve*normalized);
+//    return inv_perc;
+    
+    double irr_Vega = 3.10e-9; // W/m^2
+    double obs_irr = irr_Vega * pow(10, (double) -0.4 * Vmag); // W/m^2
+
+    // Camera sensor (TODO: don't re-compute this every time)
+    double integration_time = 50e-02;   // integration time in seconds
+    double quantum_efficiency = 0.63;
+    double full_well = 6693.0;          //  e (electrons)
+    double lambda = 525e-9;             // m (mean wavelength)
+    double h = 6.62607004e-34;          // Js (Planck constant) 6.626176 x 10-34
+    double c = 299792458;               // m/s (speed of light)
+    double joules_per_photon = h*c/lambda;
+    double max_photons_per_second_per_pixel = full_well /
+                                        (quantum_efficiency*integration_time);
+    // Saturation power
+    double max_watts_per_pixel = max_photons_per_second_per_pixel*
+                                joules_per_photon;
+    // Defocussing effects
+    double d_coc_pix = 6.0;             // in pixels
+    double pix_pitch = 2.2e-06;         // in m
+    double f = 22.86e-3;                // focal length in m
+    double N = 1.2;                     // f-number
+    double coc_area = pow(PI*(d_coc_pix*pix_pitch/2),2); // area of CoC in m
+    double n_pix_coc = coc_area/(pow(pix_pitch,2)); // area of CoC in pixels
+    double aperture_area = f/(2*N);     // in m^2
+
+    double obs_power = obs_irr*aperture_area/n_pix_coc; // always defocussed
+
+    double correction_factor = 1.0;
+    obs_power *= correction_factor;
+
+    double norm = std::min(obs_power/max_watts_per_pixel, 1.0); // normalization
+    //std::cout << max_watts_per_pixel << std::endl;
+    //std::cout << obs_power << std::endl;
+    std::cout << norm << std::endl;
+    return norm;
 }
 
 void change_mvp()//(float d_alpha, float d_delta)
@@ -228,21 +267,21 @@ void compute_angles_from_inputs()
 	last_time = curr_time;
 }
 
-void move_target() 
+void move_target(RSO *rso) 
 {
     float seconds_passed = 0.01f; // assume constant time for now (TODO)
-    target_delta = target_delta + (seconds_passed*tgt_delta_speed);
-    target_alpha = target_alpha + (seconds_passed*tgt_alpha_speed);
+    rso->setDE(rso->DErad + (seconds_passed*rso->DE_speed));
+    rso->setRA(rso->RArad + (seconds_passed*rso->RA_speed));
 
     /********************* Update the buffers ********************************/
     // make new star
-    target = new Star(0,target_alpha, target_delta, 0.0, 0.0, 0.0, target->Hpmag);
-    g_vertex_buffer_data[3*0+0] = target->y;
-    g_vertex_buffer_data[3*0+1] = target->z;
-    g_vertex_buffer_data[3*0+2] = target->x;
+    // target = new Star(0,target_alpha, target_delta, 0.0, 0.0, 0.0, target->Hpmag);
+    g_vertex_buffer_data[3*0+0] = rso->y;
+    g_vertex_buffer_data[3*0+1] = rso->z;
+    g_vertex_buffer_data[3*0+2] = rso->x;
 	
-    printf("RA: %f, DE: %f target\n", glm::degrees(target_alpha), 
-            glm::degrees(target_delta)); 
+    printf("RA: %f, DE: %f rso %d\n", glm::degrees(rso->RArad), 
+            glm::degrees(rso->DErad), rso-> id); 
     //printf("x,y,z: %f,%f,%f\n", g_vertex_buffer_data[0], 
     //        g_vertex_buffer_data[1], g_vertex_buffer_data[2]);
     // Re-bind the buffers
@@ -252,7 +291,7 @@ void move_target()
 		g_vertex_buffer_data, GL_STATIC_DRAW);
 }
 
-void screencapture()
+void screencapture(RSO *target)
 {
     int g_gl_width = width;
     int g_gl_height = height; 
@@ -264,7 +303,7 @@ void screencapture()
 				glm::degrees(rotate_delta) );
 	sprintf( name, "screenshot_ra_%.2f_de_%.2f__tra_%.2f_tde_%.2f.png", 
             glm::degrees(rotate_alpha), glm::degrees(rotate_delta),
-            glm::degrees(target_alpha), glm::degrees(target_delta));
+            glm::degrees(target->RArad), glm::degrees(target->DErad));
 	unsigned char *last_row = buffer + ( g_gl_width * 3 * ( g_gl_height - 1 ) );
 	if ( !stbi_write_png( name, g_gl_width, g_gl_height, 3, last_row,
 												-3 * g_gl_width ) ) {
@@ -312,7 +351,7 @@ void init()
         target_HpMag = DARKEST;
     }
     // TODO: make it easy to generate the target elsewhere
-    target = new Star(); // starts at origin
+    target = new RSO(); // starts at origin
     target->Hpmag = target_HpMag;
     printf("Hpmag: %f\n", target_HpMag);
 
@@ -505,11 +544,13 @@ void display()
 	change_mvp();
     
     // Use 'M' to start moving the target
-    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS){
+        msleep(100);
         is_tgt_moving = !(is_tgt_moving);
+    }
 
     if (is_tgt_moving)
-        move_target();
+        move_target(target);
 
 	// Send our transformation to the currently bound shader, 
 	// in the "MVP" uniform
@@ -544,7 +585,7 @@ void display()
 
     // Take screenshot on S key press
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        screencapture();
+        screencapture(target);
 
 	// msleep(100);
 	glDisableVertexAttribArray(vertexPosition_modelspaceID);
