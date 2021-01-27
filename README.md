@@ -40,4 +40,7 @@ Run the executable
 Use the arrow keys to look around
 * ARROW UP/DOWN to increase/decrease declination
 * ARROW LEFT/RIGHT to change right ascension
+
+Press
 * ESC to close the window
+* S key to capture an image
